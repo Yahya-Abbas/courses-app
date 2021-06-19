@@ -20,6 +20,8 @@
   "scripts": {
     "start": "react-scripts start",
     "start-api": "cd api && conda activate venv &&  C:/Users/YahyaAbbas/miniconda3/envs/venv/python.exe d:/AUC/Fall-20/Database/Project/Project-Final/MS3-Web-Application/courses-app/api/api.py --no-debugger",
+    "install-api": "conda create -n api-env --file requirements.txt",
+    "install-frontend": "npm install && npm start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
