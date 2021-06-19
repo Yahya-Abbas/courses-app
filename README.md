@@ -1,5 +1,12 @@
-# Getting Started with Create React App
+# AUC Courses Catalog App
+A web app project for the courses offered at the American University in Cairo.
+This Project consists of a backend running on python Flask and a frontedn with React.
 
+## Requirements
+- The backend API requirements are listed in the `requirements.txt` file
+- For the frontend you need to run npm install && npm start to run the web app
+
+## Getting Started with Create React App
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
@@ -13,6 +20,20 @@ Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
 The page will reload if you make edits.\
 You will also see any lint errors in the console.
+
+### `yarn start-api`
+
+Runs the app in the development mode.\
+Open [http://localhost:5000](http://localhost:5000) to view it in the browser.
+
+### `yarn install-api`
+
+Creates a new virtual environment called `api-env` from the `requirement` file\
+
+### `yarn install-frontend`
+
+Runs the commands needed to start frontend\
+
 
 ### `yarn test`
 
