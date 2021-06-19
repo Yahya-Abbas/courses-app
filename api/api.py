@@ -1,46 +1,65 @@
-from flask import Flask, request, render_template, redirect, url_for, flash, session
-
+from flask import Flask, request, session, render_template, redirect, url_for, flash, jsonify
+from flask_cors import CORS, cross_origin
 from flask_mysqldb import MySQL
 import MySQLdb
 
 app = Flask(__name__)
 app.secret_key = 'random string'
 
-app.config['MYSQL_USER'] = 'yahya_abbas'
-app.config['MYSQL_PASSWORD'] = 'Fw9bBG#y!-FWJp3'
-app.config['MYSQL_DB'] = 'auc_catalog_app'
-app.config['MYSQL_HOST'] = 'db4free.net'
+app.config['MYSQL_USER'] = 'freedbtech_yahya'
+app.config['MYSQL_PASSWORD'] = 'password'
+app.config['MYSQL_DB'] = 'freedbtech_aucCatalog'
+app.config['MYSQL_HOST'] = 'freedb.tech'
+#app.config["JSON_AS_ASCII"] = False
+#app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+#app.config.update(SESSION_COOKIE_SAMESITE="None", SESSION_COOKIE_SECURE=True)
+
+CORS(app)
 
 mysql = MySQL(app)
 
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/api/viewCourseReviews/', methods=['GET', 'POST'])
 def index():
-    error = None
+    # check for a bad request
+    # will probably need to be changed after doing the front to .json
+    if not int(request.json['requested']):
+        cursor = mysql.connection.cursor()
+        departments = cursor.execute("SELECT Dept_Code FROM department")
+        departments = list(cursor.fetchall())
+        cursor.close()
+        # key_list = ['departmentCode']
+        # final_departments = [{key_list[0]: department[0]} for department in departments]
+        # print(final_departments)
+        return jsonify(departments)
+    else:
+        if (
+            not request.json
+            or not "dept_code" in request.json
+            or not "old_course_code" in request.json
+            or not "new_course_code" in request.json
+        ):
+            return "something missing", 400
+    # retirieve the needed data from the request
+        dept_code = str(request.json["dept_code"])
+        old_course_code = str(request.json["old_course_code"])
+        new_course_code = str(request.json["new_course_code"])
+        print(dept_code, old_course_code, new_course_code)
+        cursor = mysql.connection.cursor()
+        retrieved_courses = cursor.execute("SELECT * FROM verified_reviews where Dept_Code = '" + dept_code +
+                                           "' and Old_Course_Code = '" + old_course_code + "' and New_Course_Code = '" + new_course_code + "';")
+        retrieved_courses = list(cursor.fetchall())
+        cursor.close()
 
-    if "sign_in" in request.form:
-        if request.method == 'POST':
-            user_details = request.form
-            auc_id = user_details['auc_id']
-            password = user_details['password']
+        key_list = ['studentID', 'departmentCode', 'oldCourseCode', 'newCourseCode', 'courseName', 'rating', 'review', 'verified']
 
-            cursor = mysql.connection.cursor()
-            cursor.execute("SELECT * from users where AUC_ID = " +
-                           auc_id + " and Password = '" + password + "'")
-            data = cursor.fetchone()
-            cursor.close()
-            if data is None:
-                error = 'Invalid ID or Password, Please try again!\nIf you are not a returning user,Please Sign Up'
-            else:
-                flash('You were successfully logged in')
-                session['session_auc_id'] = auc_id
-                return redirect(url_for('main_menu'))
-    elif "sign_up" in request.form:
-        return redirect(url_for('add_student_record'))
-    return render_template('index.html', error=error)
+        final_courses = [{key_list[0]: course[0], key_list[1]: course[1], key_list[2]: course[2], key_list[3]: course[3], key_list[4]: course[4], key_list[5]: course[5], key_list[6]: course[6], key_list[7]: course[7]}
+        for course in retrieved_courses]
+        
+        return jsonify(final_courses)
 
 
-@app.route('/main_menu', methods=['GET', 'POST'])
+@app.route('/api/main_menu/', methods=['GET', 'POST'])
 def main_menu():
     if "add_review" in request.form:
         return redirect(url_for('add_course_review'))
@@ -62,7 +81,7 @@ def main_menu():
     return render_template('main_menu.html')
 
 
-@app.route('/add_course_review', methods=['GET', 'POST'])
+@app.route('/api/add_course_review/', methods=['GET', 'POST'])
 def add_course_review():
     auc_id = session.get('session_auc_id', None)
     error = None
@@ -102,7 +121,7 @@ def add_course_review():
     return render_template('add_course_review.html', error=error, departments=departments)
 
 
-@ app.route('/see_course_reviews', methods=['GET', 'POST'])
+@ app.route('/api/see_course_reviews/', methods=['GET', 'POST'])
 def see_course_reviews():
     error = None
 
@@ -141,7 +160,7 @@ def see_course_reviews():
     return render_template('see_course_reviews.html', error=error, departments=departments)
 
 
-@ app.route('/add_student_record', methods=['GET', 'POST'])
+@ app.route('/api/add_student_record/', methods=['GET', 'POST'])
 def add_student_record():
     error = None
 
@@ -188,7 +207,7 @@ def add_student_record():
     return render_template('add_student_record.html', error=error)
 
 
-@ app.route('/add_course_history', methods=['GET', 'POST'])
+@ app.route('/api/add_course_history/', methods=['GET', 'POST'])
 def add_course_history():
     auc_id = session.get('session_auc_id', None)
     error = None
@@ -230,7 +249,7 @@ def add_course_history():
     return render_template('add_course_history.html', error=error, departments=departments)
 
 
-@ app.route('/course_info', methods=['GET', 'POST'])
+@ app.route('/api/course_info/', methods=['GET', 'POST'])
 def course_info():
     error = None
 
@@ -269,7 +288,7 @@ def course_info():
     return render_template('course_info.html', error=error, departments=departments)
 
 
-@ app.route('/available_courses', methods=['GET', 'POST'])
+@ app.route('/api/available_courses/', methods=['GET', 'POST'])
 def available_courses():
     auc_id = session.get('session_auc_id', None)
     error = None
@@ -308,30 +327,21 @@ def available_courses():
     return render_template('semester_available_courses.html', error=error)
 
 
-@ app.route('/view_transcript', methods=['GET', 'POST'])
-def view_transcript():
-    auc_id = session.get('session_auc_id', None)
-    error = None
+@ app.route('/api/view_transcript/<pk>/', methods=['GET'])
+def view_transcript(pk):
+    #auc_id = session.get('session_auc_id', None)
+    #error = None
+    cursor = mysql.connection.cursor()
+    retrieved_courses = cursor.execute(
+        "SELECT f.Dept_Code, f.Old_Course_Code, f.New_Course_Code, c.Course_Name, f.Letter_Grade, f.Year, f.Semester FROM finished f INNER JOIN course c on f.Dept_Code = c.Dept_Code AND f.Old_Course_Code = c.Old_Course_Code AND f.New_Course_Code = c.New_Course_Code WHERE AUC_ID = " + pk + ";")
+    retrieved_courses = list(cursor.fetchall())
+    cursor.close()
+    
+    key_list = ['departmentCode', 'oldCourseCode', 'newCourseCode', 'name', 'letterGrade', 'year', 'semester']
 
-    if "main_menu" in request.form:
-        return redirect(url_for('main_menu'))
-    elif "sign_out" in request.form:
-        session.pop('session_auc_id', None)
-        flash(
-            'Signed Out successfuly. If you want to continue using the app, sign in again')
-        return redirect(url_for('index'))
-    else:
-        cursor = mysql.connection.cursor()
-        retrieved_courses = cursor.execute(
-            "SELECT f.Dept_Code, f.Old_Course_Code, f.New_Course_Code, c.Course_Name, f.Letter_Grade, f.Year, f.    Semester FROM finished f INNER JOIN course c on f.Dept_Code = c.Dept_Code AND f.Old_Course_Code = c.    Old_Course_Code AND f.New_Course_Code = c.New_Course_Code WHERE AUC_ID = " + auc_id + ";")
-        if retrieved_courses > 0:
-            flash('Retrieved Transcript Successfully')
-            retrieved_courses = cursor.fetchall()
-            cursor.close()
-            return render_template('transcript.html', retrieved_courses=retrieved_courses)
-        else:
-            error = "Some error occured! Please try again later"
-    return render_template('main_menu.html', error=error)
+    final_courses = [{key_list[0]: course[0], key_list[1]: course[1], key_list[2]: course[2], key_list[3]: course[3], key_list[4]: course[4], key_list[5]: course[5], key_list[6]: course[6]}
+       for course in retrieved_courses]
+    return jsonify(final_courses)
 
 
 if __name__ == "__main__":
